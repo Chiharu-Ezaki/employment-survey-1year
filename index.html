@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>就業開始１年後 ヒアリングシート</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+        }
+        /* ふりがな用のスタイル */
+        rt {
+            font-size: 0.7em;
+        }
+        /* カスタムラジオボタン */
+        .custom-radio {
+            appearance: none;
+            border: 2px solid #d1d5db;
+            border-radius: 50%;
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-right: 0.5rem;
+            position: relative;
+            top: 0.2rem;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .custom-radio:checked {
+            border-color: #4f46e5;
+            background-color: #4f46e5;
+        }
+        .custom-radio:checked::after {
+            content: '';
+            display: block;
+            width: 0.5rem;
+            height: 0.5rem;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
+        <div class="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+            <header class="text-center mb-8">
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
+                    <ruby>就業開始<rt>しゅうぎょうかいし</rt></ruby>１<ruby>年後<rt>ねんご</rt></ruby>
+                    <ruby>ヒアリングシート<rt>ひありんぐしーと</rt></ruby>
+                </h1>
+            </header>
+
+            <form id="questionnaireForm" action="https://formspree.io/f/mblalnkd" method="POST">
+                <div class="space-y-10">
+                    <!-- 氏名入力 -->
+                    <div class="p-6 bg-gray-50 rounded-xl border border-gray-200">
+                        <label for="name" class="block text-lg font-semibold mb-2 text-gray-700"><ruby>氏名<rt>しめい</rt></ruby></label>
+                        <input type="text" id="name" name="name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" required>
+                    </div>
+
+                    <!-- 各質問項目がここに表示されます -->
+                    <div id="questionsContainer"></div>
+
+                    <!-- 送信ボタン -->
+                    <div id="submitButtonContainer" class="text-center hidden pt-6">
+                        <button type="submit" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-transform transform hover:scale-105">
+                            <ruby>回答<rt>かいとう</rt></ruby>を<ruby>送信<rt>そうしん</rt></ruby>する
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- 完了メッセージ -->
+            <div id="completionMessage" class="hidden text-center p-8 bg-green-50 rounded-xl border-2 border-green-200">
+                <h2 class="text-2xl font-bold text-green-800"><ruby>ありがとうございました<rt>ありがとうございました</rt></ruby>！</h2>
+                <p class="mt-2 text-green-700"><ruby>回答<rt>かいとう</rt></ruby>が<ruby>送信<rt>そうしん</rt></ruby>されました。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // アンケートの質問項目
+        const questions = [
+            // 1. 仕事について (About Work)
+            {
+                section: "1. <ruby>仕事<rt>しごと</rt></ruby>について (About Work)",
+                type: "free_text",
+                text: "1. この１<ruby>年<rt>ねん</rt></ruby>で、<ruby>仕事<rt>しごと</rt></ruby>を<ruby>通<rt>とお</rt></ruby>じて<ruby>成長<rt>せいちょう</rt></ruby>したと<ruby>感<rt>かん</rt></ruby>じることは<ruby>何<rt>なん</rt></ruby>ですか？"
+            },
+            {
+                type: "scale",
+                text: "2. <ruby>今<rt>いま</rt></ruby>の<ruby>仕事<rt>しごと</rt></ruby>にやりがいを<ruby>感<rt>かん</rt></ruby>じていますか？",
+                options: ["1. とても<ruby>感<rt>かん</rt></ruby>じている", "2. <ruby>感<rt>かん</rt></ruby>じている", "3. どちらともいえない", "4. あまり<ruby>感<rt>かん</rt></ruby>じていない", "5. まったく<ruby>感<rt>かん</rt></ruby>じていない"]
+            },
+            {
+                type: "yes_no",
+                text: "3. <ruby>後輩<rt>こうはい</rt></ruby>に<ruby>仕事<rt>しごと</rt></ruby>を<ruby>教<rt>おし</rt></ruby>える<ruby>機会<rt>きかい</rt></ruby>はありますか？"
+            },
+            {
+                type: "free_text",
+                text: "4. <ruby>今後<rt>こんご</rt></ruby>のキャリアについて、<ruby>会社<rt>かいしゃ</rt></ruby>に<ruby>期待<rt>きたい</rt></ruby>することはありますか？（<ruby>例<rt>れい</rt></ruby>：<ruby>資格<rt>しかく</rt></ruby>の<ruby>取得<rt>しゅとく</rt></ruby>、リーダーになるためのトレーニングなど）"
+            },
+
+            // 2. 生活について (About Daily Life)
+            {
+                section: "2. <ruby>生活<rt>せいかつ</rt></ruby>について (About Daily Life)",
+                type: "yes_no",
+                text: "5. <ruby>今後<rt>こんご</rt></ruby>も<ruby>日本<rt>にほん</rt></ruby>で<ruby>生活<rt>せいかつ</rt></ruby>を<ruby>続<rt>つづ</rt></ruby>けていきたいと<ruby>思<rt>おも</rt></ruby>いますか？"
+            },
+            {
+                type: "free_text",
+                text: "6. <ruby>日本<rt>にほん</rt></ruby>の<ruby>文化<rt>ぶんか</rt></ruby>や<ruby>習慣<rt>しゅうかん</rt></ruby>で、<ruby>好<rt>す</rt></ruby>きになったものはありますか？"
+            },
+            {
+                type: "free_text",
+                text: "7. <ruby>在留資格<rt>ざいりゅうしかく</rt></ruby>の<ruby>更新<rt>こうしん</rt></ruby>など、<ruby>手続<rt>てつづ</rt></ruby>きのことで<ruby>不安<rt>ふあん</rt></ruby>なことはありますか？"
+            },
+
+            // 3. 職場の人間関係について (About Relationships at Work)
+            {
+                section: "3. <ruby>職場<rt>しょくば</rt></ruby>の<ruby>人間関係<rt>にんげんかんけい</rt></ruby>について (About Relationships at Work)",
+                type: "scale",
+                text: "8. <ruby>職場<rt>しょくば</rt></ruby>でのあなたの<ruby>役割<rt>やくわり</rt></ruby>について、<ruby>満足<rt>まんぞく</rt></ruby>していますか？",
+                options: ["1. とても<ruby>満足<rt>まんぞく</rt></ruby>", "2. <ruby>満足<rt>まんぞく</rt></ruby>", "3. どちらともいえない", "4. あまり<ruby>満足<rt>まんぞく</rt></ruby>していない", "5. まったく<ruby>満足<rt>まんぞく</rt></ruby>していない"]
+            },
+            {
+                type: "yes_no",
+                text: "9. <ruby>仕事<rt>しごと</rt></ruby>の<ruby>進<rt>すす</rt></ruby>め<ruby>方<rt>かた</rt></ruby>について、<ruby>自分<rt>じぶん</rt></ruby>の<ruby>意見<rt>いけん</rt></ruby>を<ruby>言<rt>い</rt></ruby>いやすい<ruby>環境<rt>かんきょう</rt></ruby>だと<ruby>思<rt>おも</rt></ruby>いますか？"
+            },
+
+            // 4. ワークライフバランスについて (About Work-Life Balance)
+            {
+                section: "4. ワークライフバランスについて (About Work-Life Balance)",
+                type: "scale",
+                text: "10. <ruby>仕事<rt>しごと</rt></ruby>とプライベートのバランスは<ruby>取<rt>と</rt></ruby>れていますか？",
+                options: ["1. とても<ruby>良<rt>よ</rt></ruby>いバランスだ", "2. <ruby>良<rt>よ</rt></ruby>いバランスだ", "3. どちらともいえない", "4. あまり<ruby>良<rt>よ</rt></ruby>いバランスではない", "5. <ruby>悪<rt>わる</rt></ruby>いバランスだ"]
+            },
+             {
+                type: "free_text",
+                text: "11. <ruby>有給休暇<rt>ゆうきゅうきゅうか</rt></ruby>は<ruby>取得<rt>しゅとく</rt></ruby>しやすいですか？"
+            },
+
+            // 5. 将来について (About the Future)
+            {
+                section: "5. <ruby>将来<rt>しょうらい</rt></ruby>について (About the Future)",
+                type: "scale",
+                text: "12. <ruby>今後<rt>こんご</rt></ruby>もこの<ruby>会社<rt>かいしゃ</rt></ruby>で<ruby>働<rt>はたら</rt></ruby>き<ruby>続<rt>つづ</rt></ruby>けたいですか？",
+                options: ["1. ぜひ<ruby>続<rt>つづ</rt></ruby>けたい", "2. できれば<ruby>続<rt>つづ</rt></ruby>けたい", "3. わからない", "4. あまり<ruby>続<rt>つづ</rt></ruby>けたいと<ruby>思<rt>おも</rt></ruby>わない", "5. <ruby>転職<rt>てんしょく</rt></ruby>や<ruby>帰国<rt>きこく</rt></ruby>を<ruby>考<rt>かんが</rt></ruby>えている"]
+            },
+            {
+                type: "free_text",
+                text: "13. １<ruby>年<rt>ねん</rt></ruby><ruby>前<rt>まえ</rt></ruby>と<ruby>比<rt>くら</rt></ruby>べて、<ruby>会社<rt>かいしゃ</rt></ruby>の<ruby>良<rt>よ</rt></ruby>い<ruby>点<rt>てん</rt></ruby>や<ruby>改善<rt>かいぜん</rt></ruby>してほしい<ruby>点<rt>てん</rt></ruby>について、<ruby>新<rt>あたら</rt></ruby>しく<ruby>感<rt>かん</rt></ruby>じることはありますか？"
+            },
+            {
+                type: "free_text",
+                text: "14. その<ruby>他<rt>ほか</rt></ruby>、<ruby>会社<rt>かいしゃ</rt></ruby>や<ruby>私<rt>わたし</rt></ruby>たち（<ruby>支援機関<rt>しえんきかん</rt></ruby>）に<ruby>伝<rt>つた</rt></ruby>えたいことはありますか？"
+            }
+        ];
+
+        const container = document.getElementById('questionsContainer');
+        let currentQuestionIndex = 0;
+
+        // 質問を描画する関数
+        function renderQuestion(index) {
+            container.innerHTML = '';
+
+            const q = questions[index];
+            if (!q) {
+                // 全ての質問が終わったら送信ボタンを表示
+                document.getElementById('submitButtonContainer').classList.remove('hidden');
+                return;
+            }
+
+            // 条件付きの質問をスキップするロジック
+            if (q.condition) {
+                const conditionQ = document.querySelector(`input[name="${q.condition.qId}"]:checked`);
+                if (!conditionQ || conditionQ.value !== q.condition.value) {
+                    currentQuestionIndex++;
+                    renderQuestion(currentQuestionIndex);
+                    return;
+                }
+            }
+
+            const questionCard = document.createElement('div');
+            questionCard.className = 'p-6 bg-gray-50 rounded-xl border border-gray-200 animate-fade-in';
+            questionCard.id = `q-card-${index}`;
+
+            let content = '';
+
+            if (q.section) {
+                content += `<h2 class="text-xl font-bold text-indigo-700 mb-4 pb-2 border-b-2 border-indigo-200">${q.section}</h2>`;
+            }
+
+            content += `<p class="text-lg font-semibold mb-4 text-gray-700">${q.text}</p>`;
+            content += `<div class="space-y-3">`;
+
+            const questionId = q.id || `q${index}`;
+
+            switch (q.type) {
+                case 'yes_no':
+                    content += `
+                        <label class="flex items-center p-3 bg-white rounded-lg border border-gray-300 cursor-pointer hover:bg-indigo-50">
+                            <input type="radio" name="${questionId}" value="はい" class="custom-radio" required>
+                            <span>はい</span>
+                        </label>
+                        <label class="flex items-center p-3 bg-white rounded-lg border border-gray-300 cursor-pointer hover:bg-indigo-50">
+                            <input type="radio" name="${questionId}" value="いいえ" class="custom-radio" required>
+                            <span>いいえ</span>
+                        </label>
+                    `;
+                    break;
+                case 'scale':
+                    q.options.forEach((opt, i) => {
+                        content += `
+                            <label class="flex items-center p-3 bg-white rounded-lg border border-gray-300 cursor-pointer hover:bg-indigo-50">
+                                <input type="radio" name="${questionId}" value="${i + 1}. ${opt.replace(/<[^>]*>?/gm, '')}" class="custom-radio" required>
+                                <span>${opt}</span>
+                            </label>
+                        `;
+                    });
+                    break;
+                case 'free_text':
+                    content += `<textarea name="${questionId}" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="ここに記入してください"></textarea>
+                    <p class="text-sm text-gray-500 mt-2">
+                        <ruby>日本語<rt>にほんご</rt></ruby>がわからない<ruby>場合<rt>ばあい</rt></ruby>は、あなたの<ruby>国<rt>くに</rt></ruby>の<ruby>言葉<rt>ことば</rt></ruby>で<ruby>書<rt>か</rt></ruby>いてもいいですよ。
+                    </p>`;
+                    break;
+            }
+            content += `</div>`;
+            
+            // ナビゲーションボタン
+            content += `<div class="flex justify-between items-center mt-6">`;
+            if (index > 0) {
+                 content += `<button type="button" onclick="previousQuestion()" class="bg-gray-200 text-gray-700 font-semibold py-2 px-6 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition">
+                                ← <ruby>戻<rt>もど</rt></ruby>る
+                            </button>`;
+            } else {
+                content += `<div></div>`; // 最初の質問で「戻る」ボタンのスペースを確保
+            }
+            content += `<button type="button" onclick="nextQuestion()" class="bg-indigo-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+                            <ruby>次<rt>つぎ</rt></ruby>へ →
+                        </button>
+                    </div>`;
+
+            questionCard.innerHTML = content;
+            container.appendChild(questionCard);
+            
+            // フェードインアニメーション用のスタイルを追加
+            const style = document.createElement('style');
+            style.innerHTML = `
+                @keyframes fade-in {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .animate-fade-in {
+                    animation: fade-in 0.5s ease-out forwards;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // 次の質問へ進む関数
+        function nextQuestion() {
+            const currentCard = document.getElementById(`q-card-${currentQuestionIndex}`);
+            // ラジオボタンが必須の場合、選択されているかチェック
+            const radios = currentCard.querySelectorAll('input[type="radio"]');
+            if (radios.length > 0) {
+                const checkedRadio = currentCard.querySelector('input[type="radio"]:checked');
+                if (!checkedRadio) {
+                    alert('この質問に回答してください。');
+                    return;
+                }
+            }
+            currentQuestionIndex++;
+            renderQuestion(currentQuestionIndex);
+        }
+
+        // 前の質問に戻る関数
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                // スキップされた条件付き質問を逆方向に正しく処理する
+                while(currentQuestionIndex > 0) {
+                    const q = questions[currentQuestionIndex];
+                    if (q.condition) {
+                        const conditionQ = document.querySelector(`input[name="${q.condition.qId}"]:checked`);
+                        if (!conditionQ || conditionQ.value !== q.condition.value) {
+                            currentQuestionIndex--;
+                        } else {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+                renderQuestion(currentQuestionIndex);
+            }
+        }
+
+        // Formspreeへの送信処理
+        document.getElementById('questionnaireForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = new FormData(form);
+            const action = form.action;
+
+            fetch(action, {
+                method: 'POST',
+                body: data,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }).then(response => {
+                if (response.ok) {
+                    // 成功した場合、完了メッセージを表示
+                    form.classList.add('hidden');
+                    document.getElementById('completionMessage').classList.remove('hidden');
+                } else {
+                    // エラー処理
+                    response.json().then(data => {
+                        if (Object.hasOwn(data, 'errors')) {
+                            alert(data["errors"].map(error => error["message"]).join(", "));
+                        } else {
+                            alert('フォームの送信で問題が発生しました。');
+                        }
+                    })
+                }
+            }).catch(error => {
+                // ネットワークエラーなどの処理
+                alert('フォームの送信で問題が発生しました。');
+            });
+        });
+
+        // 最初の質問を表示
+        renderQuestion(currentQuestionIndex);
+    </script>
+</body>
+</html>
